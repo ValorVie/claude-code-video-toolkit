@@ -12,6 +12,22 @@ export type {
   ThemeTypography,
 } from '../../../../lib/theme';
 
+/** Subtitle entry with text, position, and timing */
+export interface SubtitleEntry {
+  /** Subtitle text */
+  text?: string;
+  /** Horizontal position 0-100 (50 = center). Default: 50 */
+  x?: number;
+  /** Vertical position 0-100 (0 = top, 100 = bottom). Default: 50 */
+  y?: number;
+  /** Font size in px. Default: 56 */
+  fontSize?: number;
+  /** Delay before subtitle appears, in seconds. Default: 0 */
+  delaySeconds?: number;
+  /** How long subtitle stays visible, in seconds. Default: clip duration */
+  durationSeconds?: number;
+}
+
 /** A single clip from the source video */
 export interface ClipConfig {
   /** Clip label (for identification in Remotion Studio) */
@@ -20,14 +36,27 @@ export interface ClipConfig {
   start: string;
   /** End time "MM:SS" or "HH:MM:SS" */
   end: string;
-  /** Subtitle text (empty = no subtitle) */
+  /** Single subtitle (shorthand) */
   subtitle?: string;
+  /** Style for single subtitle */
+  subtitleStyle?: SubtitleEntry;
+  /** Multiple subtitles with independent timing */
+  subtitles?: SubtitleEntry[];
   /** Transition effect between this clip and the next */
   transition?: 'none' | 'fade' | 'crossfade';
   /** Transition duration in frames (default: 15 = 0.5s at 30fps) */
   transitionFrames?: number;
   /** Playback speed (1 = normal, 0.5 = slow-mo, 2 = fast) */
   playbackRate?: number;
+  /** Zoom into a specific area of the frame */
+  focus?: {
+    /** Zoom scale (2 = 200%, shows center 50% of frame) */
+    scale: number;
+    /** Horizontal focus point, 0-100 (50 = center, 0 = left, 100 = right) */
+    x: number;
+    /** Vertical focus point, 0-100 (50 = center, 0 = top, 100 = bottom) */
+    y: number;
+  };
 }
 
 /** Title card shown at the beginning */

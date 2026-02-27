@@ -1,13 +1,13 @@
-# FF14 遊戲精華剪輯教學
+# 遊戲精華剪輯教學
 
-從一段完整的副本錄影，剪出精華片段，加上字幕和背景音樂。
+從一段完整的副本錄影，剪出精華片段，加上特效字幕和背景音樂。
 
 ---
 
 ## 前置準備
 
 你需要：
-- 一段副本錄影（.mp4）
+- 一段遊戲錄影（.mp4 / .webm）
 - 一首背景音樂（.mp3，可選）
 - 記下你想保留的精彩時間點
 
@@ -19,7 +19,7 @@
 
 ## Step 1：放入素材
 
-打開資料夾 `templates/game-highlight/public/`：
+打開資料夾 `public/`：
 
 ```
 public/
@@ -39,7 +39,17 @@ public/
 
 ## Step 2：記錄時間軸
 
-看一遍影片，記下精彩片段的時間點。格式像這樣：
+看一遍影片，記下精彩片段的時間點。
+
+### 推薦方式：MPV + Clip Marker
+
+安裝 MPV 播放器後搭配 clip-marker.lua 腳本，邊看邊按 `M` 標記時間點，最後 `Ctrl+S` 自動輸出 `clips.txt`。
+
+詳見 [MPV Clip Marker 使用指南](../../docs/mpv-clip-marker.md)。
+
+### 手動記錄
+
+用任何播放器暫停記時間，格式像這樣：
 
 ```
 00:02:15 ~ 00:02:45  開場集合
@@ -48,7 +58,7 @@ public/
 00:22:10 ~ 00:22:50  First Clear！
 ```
 
-> **提示**：用任何播放器暫停記時間就好。不用很精確，之後預覽時可以微調。
+> **提示**：時間不用很精確，之後預覽時可以微調。建議前後多抓 2-3 秒緩衝，讓觀眾有反應時間。
 
 ---
 
@@ -57,7 +67,7 @@ public/
 用 VS Code 或任何編輯器打開：
 
 ```
-templates/game-highlight/src/config/highlight-config.ts
+src/config/highlight-config.ts
 ```
 
 ### 3a. 設定影片來源
@@ -83,6 +93,7 @@ titleCard: {
 
 ```typescript
 clips: [
+  // 基本用法
   {
     label: '開場',              // 名稱（給自己看的）
     start: '00:02:15',          // 開始時間
@@ -91,15 +102,34 @@ clips: [
     transition: 'fade',         // 轉場：'none' | 'fade' | 'crossfade'
     transitionFrames: 15,       // 轉場長度（15 幀 = 0.5 秒）
   },
+
+  // 進階：調整字幕位置和時間
   {
     label: 'Tank LB',
     start: '00:15:00',
     end: '00:15:30',
     subtitle: 'Tank LB3 救場！',
+    subtitleStyle: {
+      x: 50,                   // 水平位置 0-100（50=置中）
+      y: 70,                   // 垂直位置 0-100（0=最上, 100=最下）
+      fontSize: 48,            // 字體大小
+      delaySeconds: 2,         // 延遲 2 秒才出字幕
+      durationSeconds: 4,      // 字幕顯示 4 秒
+    },
     transition: 'fade',
-    // playbackRate: 0.5,       // 取消註解 = 慢動作
   },
-  // ... 繼續加更多片段
+
+  // 進階：同一片段內多段字幕
+  {
+    label: '最終 Phase',
+    start: '00:20:00',
+    end: '00:20:30',
+    subtitles: [
+      { text: '最後一波！', x: 50, y: 40, durationSeconds: 4 },
+      { text: '通關啦！', x: 50, y: 60, delaySeconds: 5, fontSize: 64 },
+    ],
+    transition: 'none',
+  },
 ],
 ```
 
@@ -110,12 +140,44 @@ clips: [
 | `label` | 是 | 片段名稱，顯示在 Studio 時間軸上 |
 | `start` | 是 | 開始時間，格式 `MM:SS` 或 `HH:MM:SS` |
 | `end` | 是 | 結束時間 |
-| `subtitle` | 否 | 字幕文字，留空不顯示 |
-| `transition` | 否 | `'none'`（直接切）、`'fade'`（黑色淡入淡出）、`'crossfade'` |
+| `subtitle` | 否 | 字幕文字（簡易模式，置中顯示） |
+| `subtitleStyle` | 否 | 字幕位置/大小/時間控制 |
+| `subtitles` | 否 | 多段字幕陣列（取代 subtitle） |
+| `transition` | 否 | `'none'`、`'fade'`、`'crossfade'` |
 | `transitionFrames` | 否 | 轉場幀數，預設 15（0.5 秒） |
 | `playbackRate` | 否 | `0.5` = 慢動作、`1` = 正常、`2` = 快轉 |
+| `focus` | 否 | 畫面放大（見下方） |
 
-### 3d. 設定音訊
+### 3d. Focus Zoom（放大畫面、裁掉 UI）
+
+遊戲畫面通常有很多 UI（技能列、小地圖等），可以 zoom 進去只看角色：
+
+```typescript
+{
+  label: 'Boss 搶開',
+  start: '00:03:35',
+  end: '00:03:45',
+  subtitle: '搶開了！',
+  focus: {
+    scale: 2,     // 放大 2 倍（只顯示 50% 畫面）
+    x: 50,        // 焦點水平位置 (0=左, 50=中, 100=右)
+    y: 40,        // 焦點垂直位置 (0=上, 50=中, 100=下)
+  },
+},
+```
+
+調整 focus 的方式：在 `npm run studio` 預覽中，改 config 存檔即時看效果。
+
+| 參數 | 說明 |
+|------|------|
+| `x: 30` | 焦點往左移 |
+| `x: 70` | 焦點往右移 |
+| `y: 30` | 焦點往上移 |
+| `y: 60` | 焦點往下移 |
+| `scale: 3` | 放更大（只看 33% 區域） |
+| `scale: 1.5` | 放小一點（看 67% 區域） |
+
+### 3e. 設定音訊
 
 ```typescript
 audio: {
@@ -127,8 +189,9 @@ audio: {
 ```
 
 > **音量建議**：BGM 0.2~0.3 + 原音 0.7~0.8 通常聽起來最舒服。
+> 不需要遊戲音的話設 `keepOriginalAudio: false`。
 
-### 3e. 片尾（可關閉）
+### 3f. 片尾（可關閉）
 
 ```typescript
 endCard: {
@@ -138,6 +201,18 @@ endCard: {
 },
 ```
 
+### 3g. FPS 設定
+
+預設 30fps。想要更流暢可以改成 60fps（render 時間加倍）：
+
+```typescript
+export const videoConfig: VideoConfig = {
+  fps: 60,
+  width: 1920,
+  height: 1080,
+};
+```
+
 ---
 
 ## Step 4：預覽
@@ -145,7 +220,6 @@ endCard: {
 在終端機執行：
 
 ```bash
-cd C:\Users\jack3\ff14-video-toolkit\templates\game-highlight
 npm run studio
 ```
 
@@ -162,7 +236,9 @@ npm run studio
 
 常見調整：
 - 時間不對 → 修改 `start` / `end`
-- 字幕太快消失 → 延長片段時間
+- 字幕位置不對 → 調 `subtitleStyle` 的 `x` / `y`
+- 字幕太快消失 → 加 `durationSeconds`
+- 畫面 zoom 位置不對 → 調 `focus` 的 `x` / `y`
 - BGM 太大聲 → 降低 `bgmVolume`
 - 想要慢動作 → 加 `playbackRate: 0.5`
 
@@ -183,6 +259,7 @@ npm run render:preview
 輸出檔案在：`out/highlight.mp4`
 
 > **輸出時間**：依片段總長度而定，通常 1~5 分鐘的精華需要 2~10 分鐘 render。
+> 60fps 會比 30fps 慢一倍。
 
 ---
 
@@ -193,10 +270,11 @@ npm run render:preview
 你可以直接在 Claude Code 中告訴我：
 
 ```
-「幫我改一下時間軸：
-  - 第一段改成 01:30 到 02:00
-  - 第二段字幕改成 '危險的 DPS Check'
-  - 加一段新的 05:00~05:20 標題是 'Phase 轉換'」
+「幫我把 clips.txt 轉成 highlight-config.ts」
+
+「第二段字幕改成左上角、延遲 3 秒出現」
+
+「所有片段都加 focus zoom 放大 2 倍在畫面中間」
 ```
 
 我會直接幫你改設定檔。
@@ -214,11 +292,12 @@ toolkit 內建更多轉場效果（glitch、RGB split、zoom blur 等），如�
 ## 完整流程 TL;DR
 
 ```
-1. 影片放 public/ff14_raid.mp4
-2. BGM 放 public/audio/bgm.mp3
-3. 編輯 src/config/highlight-config.ts（填時間軸）
-4. npm run studio（預覽）
-5. npm run render（輸出）
+1. 影片放 public/
+2. BGM 放 public/audio/（可選）
+3. 用 MPV + Clip Marker 標記時間點 → clips.txt
+4. 編輯 src/config/highlight-config.ts（填時間軸、字幕、focus）
+5. npm run studio（預覽 + 即時調整）
+6. npm run render（輸出）
 ```
 
-就這樣。五個步驟，不用學剪輯軟體。
+就這樣。不用學剪輯軟體。

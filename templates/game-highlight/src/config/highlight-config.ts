@@ -1,7 +1,7 @@
 import type { HighlightConfig, VideoConfig } from './types';
 
 /**
- * FF14 精華剪輯設定
+ * 遊戲精華剪輯設定
  *
  * 使用方式：
  * 1. 把影片放到 public/ (例如 public/ff14_raid.mp4)
@@ -27,6 +27,8 @@ export const highlightConfig: HighlightConfig = {
 
   clips: [
     // ===== 在這裡編輯你的片段 =====
+
+    // 基本用法：字幕 + 轉場
     {
       label: '開場',
       start: '00:02:15',
@@ -35,22 +37,34 @@ export const highlightConfig: HighlightConfig = {
       transition: 'fade',
       transitionFrames: 15,
     },
+
+    // 進階：字幕位置/大小/時間 + focus zoom
     {
       label: 'DPS Check',
       start: '00:08:30',
       end: '00:09:10',
       subtitle: 'DPS Check 差點滅團',
+      subtitleStyle: { x: 50, y: 70, fontSize: 48, delaySeconds: 2, durationSeconds: 5 },
       transition: 'crossfade',
       transitionFrames: 15,
+      focus: { scale: 2, x: 50, y: 40 },
     },
+
+    // 進階：多段字幕（同一片段內）
     {
       label: 'Tank LB',
       start: '00:15:00',
       end: '00:15:30',
-      subtitle: 'Tank LB3 救場！',
+      subtitles: [
+        { text: 'Tank LB3 救場！', x: 50, y: 40, fontSize: 56, durationSeconds: 4 },
+        { text: '差點滅團...', x: 50, y: 60, fontSize: 40, delaySeconds: 4 },
+      ],
       transition: 'fade',
       transitionFrames: 15,
+      focus: { scale: 1.5, x: 50, y: 50 },
     },
+
+    // 簡單：不加字幕、不轉場
     {
       label: 'First Clear',
       start: '00:22:10',

@@ -85,7 +85,15 @@ export const GameHighlight: React.FC = () => {
                 trimAfter={clip.endFrame}
                 volume={config.audio.keepOriginalAudio ? config.audio.originalAudioVolume : 0}
                 playbackRate={clip.playbackRate ?? 1}
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  ...(clip.focus ? {
+                    transform: `scale(${clip.focus.scale})`,
+                    transformOrigin: `${clip.focus.x}% ${clip.focus.y}%`,
+                  } : {}),
+                }}
               />
 
               {/* Fade-in transition (not on first clip) */}
@@ -105,13 +113,31 @@ export const GameHighlight: React.FC = () => {
                 </Sequence>
               )}
 
-              {/* Subtitle */}
-              {clip.subtitle && (
-                <GameSubtitle
-                  text={clip.subtitle}
-                  durationInFrames={clip.durationInFrames}
-                />
-              )}
+              {/* Subtitles */}
+              {(() => {
+                // Build subtitle list: either `subtitles` array or single `subtitle`
+                const subs = clip.subtitles
+                  ?? (clip.subtitle
+                    ? [{ text: clip.subtitle, ...clip.subtitleStyle }]
+                    : []);
+                return subs.map((sub, si) => {
+                  const subDelay = Math.round((sub.delaySeconds ?? 0) * fps);
+                  const subDuration = sub.durationSeconds
+                    ? Math.round(sub.durationSeconds * fps)
+                    : clip.durationInFrames - subDelay;
+                  return (
+                    <Sequence key={si} from={subDelay} durationInFrames={subDuration}>
+                      <GameSubtitle
+                        text={sub.text ?? ''}
+                        durationInFrames={subDuration}
+                        x={sub.x}
+                        y={sub.y}
+                        fontSize={sub.fontSize}
+                      />
+                    </Sequence>
+                  );
+                });
+              })()}
             </AbsoluteFill>
           </Sequence>
         );
